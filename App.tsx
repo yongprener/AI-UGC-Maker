@@ -1,5 +1,3 @@
-
-
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { generateModelImage, determineModelGender, generateAdsCopy, generateSpeech, generateAdImages, generateVideo, generateCaptionAndHashtags, regenerateAdImage } from './services/geminiService';
 import type { ImageFile } from './types';
@@ -91,169 +89,6 @@ const ImageUpload: React.FC<{ onUpload: (file: File) => void; currentImage: Imag
         </div>
     </div>
 );
-
-// --- LICENSE CHECK COMPONENTS ---
-
-const LicenseCheckStep: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
-    const [email, setEmail] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
-    const handleCheckLicense = async () => {
-        if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email)) {
-            setError('Please enter a valid email address.');
-            return;
-        }
-        setIsLoading(true);
-        setError(null);
-        try {
-            const response = await fetch('https://vidabot.markasai.com/paid-emails');
-            if (!response.ok) {
-                throw new Error('Could not connect to the license server.');
-            }
-            const data = await response.json();
-            
-            if (data && data.status === 'success' && Array.isArray(data.emails)) {
-                const licensedEmails = data.emails.map((e: string) => e.toLowerCase());
-                const userEmail = email.trim().toLowerCase();
-
-                if (licensedEmails.includes(userEmail)) {
-                    onSuccess();
-                } else {
-                    setError('Email tidak terdaftar. Silahkan hubungi admin di WA 0851-7433-4258');
-                }
-            } else {
-                 throw new Error('Invalid response from license server.');
-            }
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An unknown error occurred.');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-    
-    return (
-        <StepCard title="Verifikasi Lisensi">
-            <p className="text-sm text-slate-400">Masukkan email yang terdaftar untuk memulai pembuatan video iklan Anda.</p>
-            <div>
-                <label className="block text-sm font-medium text-slate-200 mb-2">Email</label>
-                <input
-                    type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="e.g., nama@email.com"
-                    className="w-full bg-slate-700 border border-slate-600 text-slate-200 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    disabled={isLoading}
-                />
-            </div>
-            {error && (
-                <p className="text-red-500 text-sm">
-                    {error.includes('WA 0851-7433-4258') ? (
-                        <>
-                            Email tidak terdaftar. Silahkan hubungi admin di{' '}
-                            <a href="https://wa.me/6285174334258" target="_blank" rel="noopener noreferrer" className="font-bold text-orange-400 hover:underline">
-                                WA 0851-7433-4258
-                            </a>
-                        </>
-                    ) : (
-                        error
-                    )}
-                </p>
-            )}
-            <button onClick={handleCheckLicense} disabled={isLoading} className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md disabled:opacity-50">
-                {isLoading ? 'Mengecek...' : 'Buat Video Iklan AI'}
-            </button>
-        </StepCard>
-    );
-};
-
-
-const LicenseVerificationModal: React.FC<{
-    isOpen: boolean;
-    onClose: () => void;
-    onSuccess: () => void;
-}> = ({ isOpen, onClose, onSuccess }) => {
-    const [email, setEmail] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (!isOpen) {
-            setEmail('');
-            setError(null);
-            setIsLoading(false);
-        }
-    }, [isOpen]);
-
-    const handleCheckLicense = async () => {
-        if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email)) {
-            setError('Please enter a valid email address.');
-            return;
-        }
-        setIsLoading(true);
-        setError(null);
-        try {
-            const response = await fetch('https://vidabot.markasai.com/paid-emails');
-            if (!response.ok) throw new Error('Could not connect to the license server.');
-            const data = await response.json();
-            
-            if (data && data.status === 'success' && Array.isArray(data.emails)) {
-                const licensedEmails = data.emails.map((e: string) => e.toLowerCase());
-                const userEmail = email.trim().toLowerCase();
-
-                if (licensedEmails.includes(userEmail)) {
-                    onSuccess();
-                } else {
-                    setError('Email tidak terdaftar. Silahkan hubungi admin di WA 0851-7433-4258');
-                }
-            } else {
-                throw new Error('Invalid response from license server.');
-            }
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An unknown error occurred.');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-    
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-            <div className="bg-slate-800 rounded-2xl border border-slate-700 p-6 sm:p-8 w-full max-w-md">
-                <h2 className="text-xl font-bold text-slate-200 mb-4">Verifikasi Lisensi</h2>
-                <div className="space-y-4">
-                    <p className="text-sm text-slate-400">Untuk melanjutkan, silahkan masukkan kembali email Anda yang terdaftar.</p>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-200 mb-2">Email</label>
-                        <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="nama@email.com" className="w-full bg-slate-700 border border-slate-600 text-slate-200 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500" disabled={isLoading} />
-                    </div>
-                     {error && (
-                        <p className="text-red-500 text-sm">
-                            {error.includes('WA 0851-7433-4258') ? (
-                                <>
-                                    Email tidak terdaftar. Silahkan hubungi admin di{' '}
-                                    <a href="https://wa.me/6285174334258" target="_blank" rel="noopener noreferrer" className="font-bold text-orange-400 hover:underline">
-                                        WA 0851-7433-4258
-                                    </a>
-                                </>
-                            ) : (
-                                error
-                            )}
-                        </p>
-                    )}
-                    <button onClick={handleCheckLicense} disabled={isLoading} className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md disabled:opacity-50">
-                        {isLoading ? 'Mengecek...' : 'Verifikasi & Buat Video'}
-                    </button>
-                    <button onClick={onClose} disabled={isLoading} className="w-full bg-slate-600 hover:bg-slate-500 text-slate-200 font-bold py-2 px-4 rounded-lg transition-colors">
-                        Batal
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
-
 
 // --- STEP COMPONENTS ---
 
@@ -546,9 +381,8 @@ const Step4Studio: React.FC<{
     const [loadingMessage, setLoadingMessage] = useState('');
     const [regeneratingImageIndex, setRegeneratingImageIndex] = useState<number | null>(null);
     const [regeneratingVideoIndex, setRegeneratingVideoIndex] = useState<number | null>(null);
-    const [isVerifying, setIsVerifying] = useState(false);
     const [copiedPromptIndex, setCopiedPromptIndex] = useState<number | null>(null);
-    
+
     const getVideoPrompts = useMemo(() => [
         `Animate this image into a photorealistic video. The camera should subtly zoom in on the product as the person interacts with it for the first time. The person's movements should be natural and curious, focusing entirely on the product in their hands. They must NOT speak or look at the camera. The video should feel like an authentic 'unboxing' moment.`,
         `Create a cinematic, close-up video from this image, focusing on the product being actively used, worn, or consumed by the person. The animation should be smooth and realistic, highlighting the product's texture and function. The person's expression should show genuine satisfaction, but their face is not the main focus. They must NOT speak or look at the camera. The shot should feel like a high-quality product demonstration.`,
@@ -623,7 +457,8 @@ const Step4Studio: React.FC<{
             setError("Buat gambar terlebih dahulu.");
             return;
         }
-        setIsVerifying(true);
+        // Directly start video generation (license gating removed)
+        handleGenerateVideos();
     };
 
     const handleRegenerateVideo = useCallback(async (indexToRegen: number) => {
@@ -667,123 +502,113 @@ const Step4Studio: React.FC<{
     const isBusy = !!isLoading || regeneratingImageIndex !== null || regeneratingVideoIndex !== null;
 
     return (
-        <>
-            <LicenseVerificationModal
-                isOpen={isVerifying}
-                onClose={() => setIsVerifying(false)}
-                onSuccess={() => {
-                    setIsVerifying(false);
-                    handleGenerateVideos();
-                }}
-            />
-            <StepCard title="Step 4: Studio Iklan">
+        <StepCard title="Step 4: Studio Iklan">
+            <div className="text-center">
+                <button onClick={handleGenerateImages} disabled={isBusy} className="bg-slate-600 hover:bg-slate-500 text-white font-bold py-3 px-6 rounded-lg disabled:opacity-50 transition-colors shadow-md">
+                    {isLoading === 'images' ? 'Membuat Adegan...' : studio.adImages.length > 0 ? 'Buat Ulang 3 Adegan' : 'Buat 3 Adegan Iklan'}
+                </button>
+            </div>
+            {isLoading === 'images' && <LoadingSpinner message={loadingMessage} />}
+            {studio.adImages.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {studio.adImages.map((src, i) => 
+                        <div key={i} className="space-y-2">
+                            {regeneratingImageIndex === i ? (
+                                <div className="w-full aspect-[9/16] bg-slate-700 flex items-center justify-center rounded-lg">
+                                    <LoadingSpinner message="Generating..." />
+                                </div>
+                            ) : (
+                                <img src={src} alt={`Ad scene ${i+1}`} className="rounded-lg w-full aspect-[9/16] object-cover" />
+                            )}
+                            <div className="grid grid-cols-2 gap-2">
+                                <button 
+                                    onClick={() => handleRegenerateImage(i)}
+                                    disabled={isBusy}
+                                    className="w-full bg-slate-600 hover:bg-slate-500 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50 text-sm"
+                                >
+                                    {regeneratingImageIndex === i ? '...' : 'Regenerate'}
+                                </button>
+                                <a
+                                    href={src}
+                                    download={`vidabot-scene-${i + 1}.png`}
+                                    className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 text-sm"
+                                    >
+                                    <DownloadIcon className="w-4 h-4" />
+                                    Download
+                                </a>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+            {studio.adImages.length > 0 && (
                 <div className="text-center">
-                    <button onClick={handleGenerateImages} disabled={isBusy} className="bg-slate-600 hover:bg-slate-500 text-white font-bold py-3 px-6 rounded-lg disabled:opacity-50 transition-colors shadow-md">
-                        {isLoading === 'images' ? 'Membuat Adegan...' : studio.adImages.length > 0 ? 'Buat Ulang 3 Adegan' : 'Buat 3 Adegan Iklan'}
+                    <button onClick={handleStartVideoGeneration} disabled={isBusy} className="bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-6 rounded-lg disabled:opacity-50 transition-colors shadow-md">
+                        {isLoading === 'videos' ? 'Membuat Video...' : 'Buat Video dari Adegan'}
                     </button>
                 </div>
-                {isLoading === 'images' && <LoadingSpinner message={loadingMessage} />}
-                {studio.adImages.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {studio.adImages.map((src, i) => 
-                            <div key={i} className="space-y-2">
-                                {regeneratingImageIndex === i ? (
-                                    <div className="w-full aspect-[9/16] bg-slate-700 flex items-center justify-center rounded-lg">
-                                        <LoadingSpinner message="Generating..." />
-                                    </div>
-                                ) : (
-                                    <img src={src} alt={`Ad scene ${i+1}`} className="rounded-lg w-full aspect-[9/16] object-cover" />
-                                )}
-                                <div className="grid grid-cols-2 gap-2">
-                                    <button 
-                                        onClick={() => handleRegenerateImage(i)}
-                                        disabled={isBusy}
-                                        className="w-full bg-slate-600 hover:bg-slate-500 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50 text-sm"
-                                    >
-                                        {regeneratingImageIndex === i ? '...' : 'Regenerate'}
-                                    </button>
-                                    <a
-                                        href={src}
-                                        download={`vidabot-scene-${i + 1}.png`}
-                                        className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 text-sm"
-                                        >
-                                        <DownloadIcon className="w-4 h-4" />
-                                        Download
-                                    </a>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                )}
-                {studio.adImages.length > 0 && (
-                    <div className="text-center">
-                        <button onClick={handleStartVideoGeneration} disabled={isBusy} className="bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-6 rounded-lg disabled:opacity-50 transition-colors shadow-md">
-                            {isLoading === 'videos' ? 'Membuat Video...' : 'Buat Video dari Adegan'}
-                        </button>
-                    </div>
-                )}
-                {(isLoading === 'videos' || regeneratingVideoIndex !== null) && <LoadingSpinner message={loadingMessage} />}
-                {studio.adVideos.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {studio.adVideos.map((src, i) => (
-                            <div key={src+i} className="space-y-2">
-                                <video src={src} controls className="rounded-lg w-full aspect-[9/16] object-cover" />
-                                <button 
-                                    onClick={() => handleRegenerateVideo(i)}
-                                    disabled={isBusy}
-                                    className="w-full bg-slate-600 hover:bg-slate-500 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50"
-                                >
-                                    {regeneratingVideoIndex === i ? 'Regenerating...' : 'Regenerate Video'}
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                )}
-                
-                {error && (
-                    error.includes('Lifetime quota exceeded') || error.includes('RESOURCE_EXHAUSTED') ? (
-                        <div className="bg-slate-700/50 p-4 rounded-lg space-y-4 border border-amber-500/50">
-                            <h3 className="font-bold text-amber-400 text-lg">Batas Pembuatan Video Tercapai</h3>
-                            <p className="text-slate-300">
-                                Anda telah mencapai batas pembuatan video untuk alat ini. Anda masih dapat membuat video secara manual menggunakan prompt di bawah ini dengan Vidabot VEO-3.
-                            </p>
-                            <div className="space-y-3">
-                                {getVideoPrompts.map((prompt, index) => (
-                                    <div key={index} className="bg-slate-800 p-3 rounded">
-                                        <div className="flex justify-between items-center gap-4">
-                                            <div>
-                                                <p className="font-semibold text-slate-200">Prompt Video {index + 1}:</p>
-                                                <p className="text-sm text-slate-400 italic">"{prompt}"</p>
-                                            </div>
-                                            <button
-                                                onClick={() => handleCopyPrompt(prompt, index)}
-                                                className="bg-slate-600 hover:bg-slate-500 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm whitespace-nowrap shrink-0"
-                                            >
-                                                {copiedPromptIndex === index ? 'Copied!' : 'Copy'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                             <a 
-                                href="https://vidabot.markasai.com/generate-veo3" 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="block text-center w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md"
+            )}
+            {(isLoading === 'videos' || regeneratingVideoIndex !== null) && <LoadingSpinner message={loadingMessage} />}
+            {studio.adVideos.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {studio.adVideos.map((src, i) => (
+                        <div key={src+i} className="space-y-2">
+                            <video src={src} controls className="rounded-lg w-full aspect-[9/16] object-cover" />
+                            <button 
+                                onClick={() => handleRegenerateVideo(i)}
+                                disabled={isBusy}
+                                className="w-full bg-slate-600 hover:bg-slate-500 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50"
                             >
-                                Buat Video dengan Vidabot VEO-3
-                            </a>
+                                {regeneratingVideoIndex === i ? 'Regenerating...' : 'Regenerate Video'}
+                            </button>
                         </div>
-                    ) : (
-                        <p className="text-red-500 text-sm">{error}</p>
-                    )
-                )}
-                <div className="flex space-x-4">
-                    <button onClick={onBack} className="w-full bg-slate-600 hover:bg-slate-500 text-slate-200 font-bold py-3 px-4 rounded-lg transition-colors">Back</button>
-                    <button onClick={handleNext} disabled={studio.adVideos.length < 3 || studio.adVideos.some(v => !v)} className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md disabled:opacity-50">Next</button>
+                    ))}
                 </div>
-            </StepCard>
-        </>
+            )}
+            
+            {error && (
+                error.includes('Lifetime quota exceeded') || error.includes('RESOURCE_EXHAUSTED') ? (
+                    <div className="bg-slate-700/50 p-4 rounded-lg space-y-4 border border-amber-500/50">
+                        <h3 className="font-bold text-amber-400 text-lg">Batas Pembuatan Video Tercapai</h3>
+                        <p className="text-slate-300">
+                            Anda telah mencapai batas pembuatan video untuk alat ini. Anda masih dapat membuat video secara manual menggunakan prompt di bawah ini dengan Vidabot VEO-3.
+                        </p>
+                        <div className="space-y-3">
+                            {getVideoPrompts.map((prompt, index) => (
+                                <div key={index} className="bg-slate-800 p-3 rounded">
+                                    <div className="flex justify-between items-center gap-4">
+                                        <div>
+                                            <p className="font-semibold text-slate-200">Prompt Video {index + 1}:</p>
+                                            <p className="text-sm text-slate-400 italic">"{prompt}"</p>
+                                        </div>
+                                        <button
+                                            onClick={() => handleCopyPrompt(prompt, index)}
+                                            className="bg-slate-600 hover:bg-slate-500 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm whitespace-nowrap shrink-0"
+                                        >
+                                            {copiedPromptIndex === index ? 'Copied!' : 'Copy'}
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                         <a 
+                            href="https://vidabot.markasai.com/generate-veo3" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="block text-center w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md"
+                        >
+                            Buat Video dengan Vidabot VEO-3
+                        </a>
+                    </div>
+                ) : (
+                    <p className="text-red-500 text-sm">{error}</p>
+                )
+            )}
+            <div className="flex space-x-4">
+                <button onClick={onBack} className="w-full bg-slate-600 hover:bg-slate-500 text-slate-200 font-bold py-3 px-4 rounded-lg transition-colors">Back</button>
+                <button onClick={handleNext} disabled={studio.adVideos.length < 3 || studio.adVideos.some(v => !v)} className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md disabled:opacity-50">Next</button>
+            </div>
+        </StepCard>
     );
 };
 
@@ -1042,22 +867,12 @@ const App: React.FC = () => {
     const initialStudioState = { adImages: [], adVideos: [] };
     const initialFinalVideoState = { url: null, extension: 'mp4' };
 
-    const [isLicensed, setIsLicensed] = useState(false);
-    const [isExpired, setIsExpired] = useState(false);
     const [currentStep, setCurrentStep] = useState(1);
     const [product, setProduct] = useState<{ name: string; description: string; image: ImageFile | null }>(initialProductState);
     const [model, setModel] = useState<{ source: 'manual' | 'ai'; image: ImageFile | null; description: string; }>(initialModelState);
     const [adsCopy, setAdsCopy] = useState<{ script: string; audioUrl: string | null; voiceGender: 'male' | 'female'; voiceStyle: string; }>(initialAdsCopyState);
     const [studio, setStudio] = useState<{ adImages: string[]; adVideos: string[] }>(initialStudioState);
     const [finalVideo, setFinalVideo] = useState<{ url: string | null; extension: string; }>(initialFinalVideoState);
-
-    useEffect(() => {
-        const expiryDate = new Date('2025-11-11T00:00:00Z');
-        const currentDate = new Date();
-        if (currentDate >= expiryDate) {
-            setIsExpired(true);
-        }
-    }, []);
 
     const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 5));
     const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
@@ -1139,28 +954,7 @@ const App: React.FC = () => {
     };
     
     const renderContent = () => {
-        if (isExpired) {
-            return (
-                 <div className="pt-6">
-                    <StepCard title="Masa Aktif Habis">
-                        <p className="text-red-400 text-center text-base">
-                            Masa aktif Anda telah berakhir. Silahkan hubungi admin di{' '}
-                            <a href="https://wa.me/6285174334258" target="_blank" rel="noopener noreferrer" className="font-bold text-orange-400 hover:underline">
-                                WA 0851-7433-4258
-                            </a>
-                            {' '}untuk perpanjangan.
-                        </p>
-                    </StepCard>
-                </div>
-            )
-        }
-        if (!isLicensed) {
-            return (
-                <div className="pt-6">
-                    <LicenseCheckStep onSuccess={() => setIsLicensed(true)} />
-                </div>
-            )
-        }
+        // License gating removed: always render app flow
         return (
             <>
                 <Stepper currentStep={currentStep} />
